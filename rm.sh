@@ -91,6 +91,7 @@ rm_all(){
 	for f in $@;do
 		_rm_all "$f"
 	done
+
 }
 
 rm(){
