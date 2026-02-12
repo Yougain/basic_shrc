@@ -1,0 +1,7 @@
+#!/bin/bash
+
+
+. $(dirname $0)/gyi
+
+
+install %sudo.sh %package_manager.sh %go.sh rm.sh basic_aliases.sh lc_all.sh /etc/shrc.d
