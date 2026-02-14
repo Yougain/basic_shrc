@@ -1,5 +1,9 @@
-rm_all(){
+_rm_all(){
+	local force_opt="$2"
 	if [ ! -e "$1" ];then
+		if [ "$force_opt" = true ];then
+			return 0
+		fi
 		err "'$1' does not exist."
 		return 1
 	fi
@@ -21,8 +25,8 @@ rm_all(){
 		NoBlockDevDir=1
 	fi 
 	d=$($__sudo__ realpath $1)
-	if [ "$d" = "/" ];then
-		err "cannot use rm_all to '/'"
+	if [ "$d" = "/" -o "$d" = "~" ];then
+		err "cannot use rm_all to '$d'"
 		return 1
 	fi
 	dlen=${#d}
@@ -67,7 +71,7 @@ rm_all(){
 				fi
 			fi
 			if [ -n "$doRm" ];then
-				$__sudo__ /bin/rm $VERBOSE_OPT --one-file-system -rf "$d"
+				$__sudo__ /bin/rm $([ "$force_opt" = true ] && echo "-f") $VERBOSE_OPT --one-file-system -rf "$d"
 			else
 				err "cannot delete '$d'"
 				return 1
@@ -79,6 +83,8 @@ rm_all(){
 
 
 rm_all(){
+	local force_opt="$1"
+	shift
 	if [ ! -d /dev/block ];then
 		err "directory, '/dev/block' is missing"
 		return 1
@@ -88,22 +94,55 @@ rm_all(){
 		return 1
 	fi
 	local f
-	for f in $@;do
-		_rm_all "$f"
+	for f in "$@";do
+		echo $f
+		_rm_all "$f" "$force_opt"
 	done
 
 }
 
 rm(){
+	local has_r=false
+	local has_f=false
+	for arg in "$@"; do
+		case "$arg" in
+			--) break ;;                      # 以降はオプション扱いしない
+			-r|-R|--recursive) has_r=true ;;
+			-f|--force) has_f=true ;;
+			-[!-]*[rR]*) has_r=true ;; # -rf, -fr, -irf など
+			-[!-]*f*) has_f=true ;;
+		esac
+	done
 	local VERBOSE_OPT
 	if [ -n "$DEBUG" ];then
 		VERBOSE_OPT="-v"
 	fi
-	if [ "$1" = "-rf" ];then
-		shift
-		rm_all $@
+	if [ "$has_r" = true ];then
+		local rm_targets=()
+		local after_ddash=false
+		for arg in "$@";do
+			if [ "$after_ddash" = true ];then
+				rm_targets+=("$arg")
+				continue
+			fi
+			case "$arg" in
+				--) after_ddash=true ;;
+				-*) ;;
+				*) rm_targets+=("$arg") ;;
+			esac
+		done
+
+		if [ ${#rm_targets[@]} -eq 0 ];then
+			if [ "$has_f" = true ];then
+				return 0
+			fi
+			err "missing operand"
+			return 1
+		fi
+
+		rm_all "$has_f" "${rm_targets[@]}"
 	else
-		$__sudo__ /bin/rm $@
+		$__sudo__ /bin/rm "$@"
 	fi
 }
 
