@@ -129,4 +129,51 @@ su(){
 #	esac
 #}
 
+make(){
+	if [ "$1" = "install" ]; then
+		shift
+		__sudo make install $@
+	else
+		/usr/bin/make $@
+	fi
+}
+
+gem(){
+	if [ "$1" = "install" ]; then
+		shift
+		__sudo gem install $@
+	else
+		/usr/bin/gem $@
+	fi
+}
+
+rpm(){
+	if [ -x `which ruby` ];then
+	ruby <<END
+	cmd = %w{$1}[0]
+	cmds = %w{$*}
+	if cmd[0] == ?- && cmd[1] != ?-
+		if ENV['SUDO_ABLE'] == "0" && Process.euid != 0 && cmd =~ /[iUe]/ && !cmds.find{|e| e =~ /^[^\-].*\.src\.rpm$/}
+			system *%w{/usr/bin/sudo /bin/rpm $*}
+		else
+			system *%w{/bin/rpm $*}
+		end
+	end
+END
+	else
+		/bin/rpm "$@"
+	fi
+}
+
+
+inst(){
+	__sudo $IST -y install $@
+}
+
+
+upd(){
+	__sudo $IST -y update $@
+}
+
+
 

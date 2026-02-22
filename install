@@ -4,4 +4,19 @@
 . $(dirname $0)/gyi
 
 
-install %sudo.sh %package_manager.sh %go.sh rm.sh basic_aliases.sh lc_all.sh /etc/shrc.d
+install						\
+	%sudo.sh				\
+	%package_manager.sh		\
+	%go.sh					\
+	rm.sh					\
+	key.sh					\
+	jp.sh					\
+	basic_aliases.sh		\
+	lc_all.sh				\
+	iotop.sh				\
+	g.sh					\
+	wsl.sh					\
+	dircolors.sh			\
+	no_stop_by_ctrl_s.sh    \
+	blinking.sh				\
+									/etc/shrc.d
